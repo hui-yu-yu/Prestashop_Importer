@@ -19,11 +19,11 @@ public class Main {
     public static class ProductPriceInfo {
         String core;
         String name;
-        String price1; // 例如：8051→ 1-99；M4→ 1-999；MPU→ 1-99
-        String price2; // 例如：8051→ 100-499；M4→ 1000-1999；MPU→ 100-499
-        String price3; // 例如：8051→ 500-999；M4→ 2000-4999；MPU→ 500-999
-        String price4; // 僅 8051 使用 (例如：1000-1999)
-        String price5; // 僅 8051 使用 (例如：2000-4999)
+        String price1; // 8051/M0/M23/Audio → 1-99；M4→ 1-999；MPU→ 1-99
+        String price2; // 8051/M0/M23/Audio → 100-499；M4→ 1000-1999；MPU→ 100-499
+        String price3; // 8051/M0/M23/Audio → 500-999；M4→ 2000-4999；MPU→ 500-999
+        String price4; // 僅 8051/M0/M23/Audio (1000-1999)
+        String price5; // 僅 8051/M0/M23/Audio (2000-4999)
     }
 
     /**
@@ -121,8 +121,8 @@ public class Main {
      *   - 第一階梯價格：第4欄 (index 3)
      *   - 第二階梯價格：第5欄 (index 4)
      *   - 第三階梯價格：第6欄 (index 5)
-     *   - 第四階梯價格 (僅 8051)：第7欄 (index 6)
-     *   - 第五階梯價格 (僅 8051)：第8欄 (index 7)
+     *   - 第四階梯價格 (僅 8051/M0/M23/Audio)：第7欄 (index 6)
+     *   - 第五階梯價格 (僅 8051/M0/M23/Audio)：第8欄 (index 7)
      */
     private static Map<String, ProductPriceInfo> readProductNewPriceCSV(String filePath) {
         Map<String, ProductPriceInfo> map = new HashMap<>();
@@ -154,7 +154,7 @@ public class Main {
      * 輸出欄位依序為：
      *   - 商品 ID
      *   - 商品名稱
-     *   - 新底價 (此處以第一階梯價格為示例)
+     *   - 新底價 (第一階梯價格)
      *   - Short Description (HTML 表格)
      *   - 原始 Base Price (來自 2_product_in_direct.csv 的欄位F)
      */
@@ -184,7 +184,7 @@ public class Main {
                 // 根據商品的 Core 產生 HTML 表格 (Short Description)
                 String shortDesc = generateHtmlTable(priceInfo);
 
-                // 以第一階梯價格作為新底價示例
+                // 以第一階梯價格作為新底價
                 String newBasePrice = priceInfo.price1;
                 String originalBasePrice = directInfo.basePrice;
 
@@ -234,7 +234,7 @@ public class Main {
                 String newBasePrice = priceInfo.price1;
                 String originalBasePrice = directInfo.basePrice;
 
-                // 新版的 record 陣列將相同的 shortDesc 複製至六個欄位中
+                // 新版的 record 將 shortDesc 複製至六個欄位中
                 String[] record = {
                         directInfo.id,
                         name,
@@ -265,7 +265,7 @@ public class Main {
      *       500-999 → price3
      *       1000-1999 → price4
      *       2000-4999 → price5
-     *       5000+   → Contact (以超連結方式)
+     *       5000+   → Contact (超連結)
      *
      *  - M4：四個階梯
      *       1-999    → price1

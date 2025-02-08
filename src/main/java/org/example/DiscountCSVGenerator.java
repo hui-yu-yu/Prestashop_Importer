@@ -60,15 +60,15 @@ public class DiscountCSVGenerator {
                     System.out.println("Cannot find price info for: " + name);
                     continue;
                 }
-                // 只處理核心為 "MPU" 的產品（若需要處理其他類型，可移除或修改此判斷）
+                // 確認 Core，這次只處理 Core= MPU || M4 的型號
                 //if (!priceInfo.core.equalsIgnoreCase("MPU")) continue;
                 if (!(priceInfo.core.equalsIgnoreCase("MPU") || priceInfo.core.equalsIgnoreCase("M4"))) continue;
 
 
                 String startingAtTier1 = "100";
-                String priceReductionTier1 = priceInfo.discount1; // 請確保 discount1 的資料有從 CSV 中讀取到
+                String priceReductionTier1 = priceInfo.discount1; // excel 中 discount1 需為 value
                 String startingAtTier2 = "500";
-                String priceReductionTier2 = priceInfo.discount2; // 同上，請確保 discount2 的資料有讀取到
+                String priceReductionTier2 = priceInfo.discount2; // excel 中 discount2 也需為 value
                 String type = "percentage";
                 String tax = "0";
 

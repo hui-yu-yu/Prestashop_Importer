@@ -50,12 +50,12 @@ public class Main {
         Map<String, ProductDirectInfo> directInfoMap = readProductInDirectCSV(productInDirectFile);
         Map<String, ProductPriceInfo> priceInfoMap = readProductNewPriceCSV(productNewPriceFile);
 
-        // Generate the original CSV (if needed)
+        // Generate the Base Price modification CSV (if needed)
         String outputFile = folder + "output.csv";
         writeOutputCSV(outputFile, updateNames, directInfoMap, priceInfoMap);
         System.out.println("Original CSV generated at: " + outputFile);
 
-        // Generate the combined discount CSV by calling DiscountCSVGenerator
+        // Generate the combined discount CSV by calling DiscountCSVGenerator (if needed)
         String combinedDiscountOutputFile = folder + "combined_discount_output.csv";
         DiscountCSVGenerator.generateCombinedDiscountCSV(combinedDiscountOutputFile, updateNames, directInfoMap, priceInfoMap);
         System.out.println("Combined discount CSV generated at: " + combinedDiscountOutputFile);

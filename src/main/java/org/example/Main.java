@@ -14,21 +14,24 @@ import java.util.Set;
 public class Main {
 
     /**
-     * encapsulate 3_product_new_price.csv 的價格資訊
+     * Encapsulates price information from 3_product_new_price.csv.
+     * Now includes discount1 and discount2.
      */
     public static class ProductPriceInfo {
         String core;
         String name;
-        String price1; // 8051/M0/M23/Audio → 1-99；M4→ 1-999；MPU→ 1-99
-        String price2; // 8051/M0/M23/Audio → 100-499；M4→ 1000-1999；MPU→ 100-499
-        String price3; // 8051/M0/M23/Audio → 500-999；M4→ 2000-4999；MPU→ 500-999
-        String price4; // 僅 8051/M0/M23/Audio (1000-1999)
-        String price5; // 僅 8051/M0/M23/Audio (2000-4999)
+        String price1; // For MPU: 1-99
+        String price2; // For MPU: 100-499
+        String price3; // For MPU: 500-999
+        String price4; // For 8051/M0/M23/Audio
+        String price5; // For 8051/M0/M23/Audio
+        String discount1; // Price reduction value, formatted to two decimals, without "%"
+        String discount2; // Price reduction value, formatted to two decimals, without "%"
     }
 
     /**
-     * encapsulate  2_product_in_direct.csv 的資料，
-     * 包含商品 ID 與原始 Base Price（假設 Base Price 位於第 F 欄，即第 6 欄）
+     * Encapsulates data from 2_product_in_direct.csv,
+     * including product ID and the original Base Price.
      */
     public static class ProductDirectInfo {
         String id;
@@ -36,36 +39,54 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        // 設定 CSV 資料夾路徑 (放在專案根目錄下的 csv 資料夾)
+        // Set the CSV folder path (placed in the project root's "csv" folder)
         String folder = "csv" + File.separator;
         String priceUpdateFile = folder + "1_price_update.csv";
         String productInDirectFile = folder + "2_product_in_direct.csv";
         String productNewPriceFile = folder + "3_product_new_price.csv";
-        String outputFile = folder + "output.csv";
 
-        // 1. 讀取 1_price_update.csv，取得需更新的商品名稱集合
+        // Read CSV files to obtain the update names and mapping info
         Set<String> updateNames = readPriceUpdateCSV(priceUpdateFile);
-
-        // 2. 讀取 2_product_in_direct.csv，建立商品名稱對應 ProductDirectInfo 的 Map
         Map<String, ProductDirectInfo> directInfoMap = readProductInDirectCSV(productInDirectFile);
-
-        // 3. 讀取 3_product_new_price.csv，建立商品名稱對應 ProductPriceInfo 的 Map
         Map<String, ProductPriceInfo> priceInfoMap = readProductNewPriceCSV(productNewPriceFile);
 
-        // 4. 整合資料並輸出新的 CSV 檔案
+        // Generate the original CSV (if needed)
+        String outputFile = folder + "output.csv";
         writeOutputCSV(outputFile, updateNames, directInfoMap, priceInfoMap);
+        System.out.println("Original CSV generated at: " + outputFile);
 
-        System.out.println("輸出 CSV 檔案產生於：" + outputFile);
+        // Generate the combined discount CSV by calling DiscountCSVGenerator
+        String combinedDiscountOutputFile = folder + "combined_discount_output.csv";
+        DiscountCSVGenerator.generateCombinedDiscountCSV(combinedDiscountOutputFile, updateNames, directInfoMap, priceInfoMap);
+        System.out.println("Combined discount CSV generated at: " + combinedDiscountOutputFile);
     }
 
     /**
-     * read 1_price_update.csv，回傳需要更新的商品名稱集合
-     * 假設檔案有標題，且商品名稱在第二欄（index 1）
+     * Helper method to format discount values.
+     * Removes any '%' symbol and rounds the number to two decimal places.
+     */
+    private static String formatDiscount(String s) {
+        if (s == null || s.isEmpty()) {
+            return "";
+        }
+        // Remove any '%' symbol
+        s = s.replace("%", "");
+        try {
+            double value = Double.parseDouble(s);
+            return String.format("%.2f", value);
+        } catch (NumberFormatException e) {
+            return "";
+        }
+    }
+
+    /**
+     * Reads 1_price_update.csv and returns a set of product names that need updating.
+     * Assumes the product name is in the second column (index 1).
      */
     private static Set<String> readPriceUpdateCSV(String filePath) {
         Set<String> updateNames = new HashSet<>();
         try (CSVReader reader = new CSVReader(new FileReader(filePath))) {
-            // 跳過標題列
+            // Skip the header row
             reader.readNext();
             String[] nextLine;
             while ((nextLine = reader.readNext()) != null) {
@@ -80,16 +101,16 @@ public class Main {
     }
 
     /**
-     * read 2_product_in_direct.csv，建立商品名稱對應 ProductDirectInfo 的 Map
-     * 假設檔案有標題：
-     *   - ID 在第一欄 (index 0)
-     *   - 名稱在第二欄 (index 1)
-     *   - Base Price 在第六欄 (index 5)
+     * Reads 2_product_in_direct.csv and creates a map of product names to ProductDirectInfo.
+     * Assumes:
+     * - ID is in the first column (index 0)
+     * - Name is in the second column (index 1)
+     * - Base Price is in the sixth column (index 5)
      */
     private static Map<String, ProductDirectInfo> readProductInDirectCSV(String filePath) {
         Map<String, ProductDirectInfo> map = new HashMap<>();
         try (CSVReader reader = new CSVReader(new FileReader(filePath))) {
-            // 跳過標題列
+            // Skip the header row
             reader.readNext();
             String[] nextLine;
             while ((nextLine = reader.readNext()) != null) {
@@ -97,12 +118,7 @@ public class Main {
                     ProductDirectInfo info = new ProductDirectInfo();
                     info.id = nextLine[0].trim();
                     String name = nextLine[1].trim();
-                    // 若存在 Base Price 資料 (第六欄)，則讀取；否則設定為空字串
-                    if (nextLine.length > 5) {
-                        info.basePrice = nextLine[5].trim();
-                    } else {
-                        info.basePrice = "";
-                    }
+                    info.basePrice = nextLine.length > 5 ? nextLine[5].trim() : "";
                     map.put(name, info);
                 }
             }
@@ -113,21 +129,17 @@ public class Main {
     }
 
     /**
-     * read 3_product_new_price.csv，建立商品名稱對應 ProductPriceInfo 的 Map
-     * 假設檔案有標題，欄位定義如下：
-     *   - Core：第1欄 (index 0)
-     *   - (未使用)：第2欄 (index 1)
-     *   - 名稱：第3欄 (index 2)
-     *   - 第一階梯價格：第4欄 (index 3)
-     *   - 第二階梯價格：第5欄 (index 4)
-     *   - 第三階梯價格：第6欄 (index 5)
-     *   - 第四階梯價格 (僅 8051/M0/M23/Audio)：第7欄 (index 6)
-     *   - 第五階梯價格 (僅 8051/M0/M23/Audio)：第8欄 (index 7)
+     * Reads 3_product_new_price.csv and creates a map of product names to ProductPriceInfo.
+     * Assumes:
+     * - Core is in the first column (index 0)
+     * - Name is in the third column (index 2)
+     * - Price tiers start from the fourth column (index 3)
+     * - discount1 from column P (index 15) and discount2 from column Q (index 16)
      */
     private static Map<String, ProductPriceInfo> readProductNewPriceCSV(String filePath) {
         Map<String, ProductPriceInfo> map = new HashMap<>();
         try (CSVReader reader = new CSVReader(new FileReader(filePath))) {
-            // 跳過標題列
+            // Skip the header row
             reader.readNext();
             String[] nextLine;
             while ((nextLine = reader.readNext()) != null) {
@@ -140,6 +152,8 @@ public class Main {
                     info.price3 = nextLine.length > 5 ? nextLine[5].trim() : "";
                     info.price4 = nextLine.length > 6 ? nextLine[6].trim() : "";
                     info.price5 = nextLine.length > 7 ? nextLine[7].trim() : "";
+                    info.discount1 = nextLine.length > 15 ? formatDiscount(nextLine[15].trim()) : "";
+                    info.discount2 = nextLine.length > 16 ? formatDiscount(nextLine[16].trim()) : "";
                     map.put(info.name, info);
                 }
             }
@@ -150,58 +164,17 @@ public class Main {
     }
 
     /**
-     * 整合資料後，export new CSV file
-     * 輸出欄位依序為：
-     *   - 商品 ID
-     *   - 商品名稱
-     *   - 新底價 (第一階梯價格)
-     *   - Short Description (HTML 表格)
-     *   - 原始 Base Price (來自 2_product_in_direct.csv 的欄位F)
+     * Exports a new CSV file with the following columns:
+     * - ID
+     * - Name
+     * - New Base Price (using the first tier price)
+     * - Six Short Description columns (copies of the generated HTML table)
+     * - Original Base Price (from 2_product_in_direct.csv)
      */
-
-    /*
-    private static void writeOutputCSV(String filePath, Set<String> updateNames,
-
-                                       Map<String, ProductDirectInfo> directInfoMap,
-                                       Map<String, ProductPriceInfo> priceInfoMap) {
-        try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
-            String[] header = {"ID", "Name", "New Base Price", "Short Description", "Original Base Price"};
-            writer.writeNext(header);
-
-            for (String name : updateNames) {
-                ProductDirectInfo directInfo = directInfoMap.get(name);
-                ProductPriceInfo priceInfo = priceInfoMap.get(name);
-
-                if (directInfo == null) {
-                    System.out.println("找不到商品 ID 與原始價格資訊，商品名稱：" + name);
-                    continue;
-                }
-                if (priceInfo == null) {
-                    System.out.println("找不到價格資訊，商品名稱：" + name);
-                    continue;
-                }
-
-                // 根據商品的 Core 產生 HTML 表格 (Short Description)
-                String shortDesc = generateHtmlTable(priceInfo);
-
-                // 以第一階梯價格作為新底價
-                String newBasePrice = priceInfo.price1;
-                String originalBasePrice = directInfo.basePrice;
-
-                String[] record = {directInfo.id, name, newBasePrice, shortDesc, originalBasePrice};
-                writer.writeNext(record);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-     */
-
     private static void writeOutputCSV(String filePath, Set<String> updateNames,
                                        Map<String, ProductDirectInfo> directInfoMap,
                                        Map<String, ProductPriceInfo> priceInfoMap) {
         try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
-            // 新版的 header 擴增為 10 個欄位，其中六個 Short Description 欄位
             String[] header = {
                     "ID",
                     "Name",
@@ -221,30 +194,28 @@ public class Main {
                 ProductPriceInfo priceInfo = priceInfoMap.get(name);
 
                 if (directInfo == null) {
-                    System.out.println("找不到商品 ID 與原始價格資訊，商品名稱：" + name);
+                    System.out.println("Cannot find product ID for: " + name);
                     continue;
                 }
                 if (priceInfo == null) {
-                    System.out.println("找不到價格資訊，商品名稱：" + name);
+                    System.out.println("Cannot find price info for: " + name);
                     continue;
                 }
 
-                // 產生 HTML 表格 (Short Description)
                 String shortDesc = generateHtmlTable(priceInfo);
                 String newBasePrice = priceInfo.price1;
                 String originalBasePrice = directInfo.basePrice;
 
-                // 新版的 record 將 shortDesc 複製至六個欄位中
                 String[] record = {
                         directInfo.id,
                         name,
                         newBasePrice,
-                        shortDesc, // Short Description-EN
-                        shortDesc, // Short Description-TW
-                        shortDesc, // Short Description-DE
-                        shortDesc, // Short Description-KR
-                        shortDesc, // Short Description-JA
-                        shortDesc, // Short Description-CN
+                        shortDesc,
+                        shortDesc,
+                        shortDesc,
+                        shortDesc,
+                        shortDesc,
+                        shortDesc,
                         originalBasePrice
                 };
                 writer.writeNext(record);
@@ -254,30 +225,8 @@ public class Main {
         }
     }
 
-
     /**
-     * 根據商品的 Core 與價格資訊產生 HTML 表格 (Short Description)
-     *
-     * 不同 Core 處理方式：
-     *  - 8051、M0M23、Audio：六個階梯
-     *       1-99    → price1
-     *       100-499 → price2
-     *       500-999 → price3
-     *       1000-1999 → price4
-     *       2000-4999 → price5
-     *       5000+   → Contact (超連結)
-     *
-     *  - M4：四個階梯
-     *       1-999    → price1
-     *       1000-1999 → price2
-     *       2000-4999 → price3
-     *       5000+    → Contact
-     *
-     *  - MPU：四個階梯
-     *       1-99    → price1
-     *       100-499 → price2
-     *       500-999 → price3
-     *       1000+   → Contact
+     * Generates an HTML table (short description) based on the product's core and pricing info.
      */
     private static String generateHtmlTable(ProductPriceInfo info) {
         StringBuilder sb = new StringBuilder();

@@ -14,7 +14,7 @@ import java.util.Set;
 public class Main {
 
     /**
-     * 用來封裝來自 3_product_new_price.csv 的價格資訊
+     * encapsulate 3_product_new_price.csv 的價格資訊
      */
     public static class ProductPriceInfo {
         String core;
@@ -27,7 +27,7 @@ public class Main {
     }
 
     /**
-     * 用來封裝來自 2_product_in_direct.csv 的資料，
+     * encapsulate  2_product_in_direct.csv 的資料，
      * 包含商品 ID 與原始 Base Price（假設 Base Price 位於第 F 欄，即第 6 欄）
      */
     public static class ProductDirectInfo {
@@ -59,7 +59,7 @@ public class Main {
     }
 
     /**
-     * 讀取 1_price_update.csv，回傳需要更新的商品名稱集合
+     * read 1_price_update.csv，回傳需要更新的商品名稱集合
      * 假設檔案有標題，且商品名稱在第二欄（index 1）
      */
     private static Set<String> readPriceUpdateCSV(String filePath) {
@@ -80,7 +80,7 @@ public class Main {
     }
 
     /**
-     * 讀取 2_product_in_direct.csv，建立商品名稱對應 ProductDirectInfo 的 Map
+     * read 2_product_in_direct.csv，建立商品名稱對應 ProductDirectInfo 的 Map
      * 假設檔案有標題：
      *   - ID 在第一欄 (index 0)
      *   - 名稱在第二欄 (index 1)
@@ -113,7 +113,7 @@ public class Main {
     }
 
     /**
-     * 讀取 3_product_new_price.csv，建立商品名稱對應 ProductPriceInfo 的 Map
+     * read 3_product_new_price.csv，建立商品名稱對應 ProductPriceInfo 的 Map
      * 假設檔案有標題，欄位定義如下：
      *   - Core：第1欄 (index 0)
      *   - (未使用)：第2欄 (index 1)
@@ -150,7 +150,7 @@ public class Main {
     }
 
     /**
-     * 整合資料後，輸出新的 CSV 檔案
+     * 整合資料後，export new CSV file
      * 輸出欄位依序為：
      *   - 商品 ID
      *   - 商品名稱
